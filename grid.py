@@ -62,4 +62,12 @@ def mow(grid, i, j):
                 grid[i][j + 2] = 'empty'
                 mow(grid, i, j + 2)
 
+def explore_maze(grid, start_i, start_j, swag):
+    grid_copy = [row[:] for row in grid]
+    bfs_queue = [[start_i, start_j]]
+    directions = ['U', 'D', 'L', 'R']
+    while bfs_queue:
+        i, j = bfs_queue.pop(0)
+        
+
 print_maze(build_maze(5, 10, None))
