@@ -73,7 +73,7 @@ def explore_maze(grid, start_i, start_j, swag):
         i, j = bfs_queue.pop(0)
         if grid[i][j] != 'Start' and randint(1,10) == 1:
             grid[i][j] = swag[randint(0, len(swag)-1)]
-            grid_copy[i][j] = 'visited'
+        grid_copy[i][j] = 'visited'
         for direction in directions:
             explore_i = i
             explore_j = j
@@ -90,6 +90,7 @@ def explore_maze(grid, start_i, start_j, swag):
                 continue
             elif grid_copy[explore_i][explore_j] != 'visited' and grid_copy[explore_i][explore_j] != 'wall':
                 bfs_queue.append([explore_i, explore_j])
+                
     grid[i][j] = 'End'
         
 
