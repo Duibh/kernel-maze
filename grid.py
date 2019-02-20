@@ -1,4 +1,7 @@
 from random import randint
+from collections import defaultdict, deque
+from heapq import heappush, heappop
+import operator
 
 def build_maze(m, n, swag):
     grid = []
@@ -7,11 +10,12 @@ def build_maze(m, n, swag):
         for j in range(n):
             row.append("wall")
         grid.append(row)
-    start_i = randint(0, m - 1)
-    start_j = randint(0, n - 1)
+    start_i = randint(0, m-2)
+    start_j = randint(0, n-2)
     grid[start_i][start_j] = 'Start'
     mow(grid, start_i, start_j)
-    explore_maze(grid, start_i, start_j, swag)
+    end_i, end_j = explore_maze(grid, start_i, start_j, swag)
+    a_star(grid, (start_i, start_j), (end_i, end_j), swag)
     return grid
 
 def print_maze(grid):
@@ -34,7 +38,7 @@ def mow(grid, i, j):
         direction = directions.pop(directions_index)
 
         if direction == 'U':
-            if i - 2 < 0:
+            if i - 2 < 1:
                 continue
             elif grid[i - 2][j] == 'wall':
                 grid[i - 1][j] = 'empty'
@@ -42,7 +46,7 @@ def mow(grid, i, j):
                 mow(grid, i - 2, j)
         
         elif direction == 'D':
-            if i + 2 >= len(grid):
+            if i + 2 >= len(grid)-1:
                 continue
             elif grid[i + 2][j] == 'wall':
                 grid[i + 1][j] = 'empty'
@@ -50,7 +54,7 @@ def mow(grid, i, j):
                 mow(grid, i + 2, j)
         
         elif direction == 'L':
-            if j - 2 < 0:
+            if j - 2 < 1:
                 continue
             elif grid[i][j - 2] == 'wall':
                 grid[i][j - 1] = 'empty'
@@ -58,7 +62,7 @@ def mow(grid, i, j):
                 mow(grid, i, j - 2)
         
         else:
-            if j + 2 >= len(grid[0]):
+            if j + 2 >= len(grid[0]) -1:
                 continue
             elif grid[i][j + 2] == 'wall':
                 grid[i][j + 1] = 'empty'
@@ -92,6 +96,57 @@ def explore_maze(grid, start_i, start_j, swag):
                 bfs_queue.append([explore_i, explore_j])
                 
     grid[i][j] = 'End'
-        
+    return i, j
 
-print_maze(build_maze(10, 30, ['candy', 'werewolf', 'pumpkin']))
+def heuristic(a, b):
+    return (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2
+
+def a_star(grid, start, end, swag):
+    neighbors = [(0,1),(0,-1),(1,0),(-1,0),(1,1),(1,-1),(-1,1),(-1,-1)]
+    close_set = set()
+    came_from = {}
+    gscore = {start:0}
+    fscore = {start:heuristic(start, end)}
+    oheap = []
+    heappush(oheap, (fscore[start], start))
+    swag_collection = defaultdict(int)
+    while oheap:
+        current = heappop(oheap)[1]
+        if current == end:
+            data = []
+            while current in came_from:
+                i, j = current
+                if grid[i][j] != 'End':
+                    if grid[i][j] in swag:
+                        swag_collection[grid[i][j]] += 1
+                    grid[i][j] = '.'
+                data.insert(0, current)
+                current = came_from[current]
+            if swag_collection:
+                print('Swag:')
+                for key, value in sorted(swag_collection.items(), key=operator.itemgetter(1)) :
+                    print('\t{0} - {1}'.format(key, value))
+            else:
+                print('No swag!')
+            return data
+        close_set.add(current)
+        for i, j in neighbors:
+            neighbor = current[0] + i, current[1] + j
+            tentative_g_score = gscore[current] + heuristic(current, neighbor)
+            if 0 <= neighbor[0] < len(grid):
+                if 0 <= neighbor[1] < len(grid[0]):
+                    if grid[neighbor[0]][neighbor[1]] == 'wall':
+                        continue
+                else:
+                    continue
+            else:
+                continue
+            if neighbor in close_set and tentative_g_score >= gscore.get(neighbor, 0):
+                continue
+            if  tentative_g_score < gscore.get(neighbor, 0) or neighbor not in [i[1] for i in oheap]:
+                came_from[neighbor] = current
+                gscore[neighbor] = tentative_g_score
+                fscore[neighbor] = tentative_g_score + heuristic(neighbor, end)
+                heappush(oheap, (fscore[neighbor], neighbor))
+
+print_maze(build_maze(15, 30, ['candy', 'werewolf', 'pumpkin']))
